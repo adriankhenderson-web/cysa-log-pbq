@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CySA+ Log Analysis PBQ</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 850px;
+      margin: 30px auto;
+      padding: 0 18px;
+      line-height: 1.5;
+      color: #17212b;
+    }
+    .panel {
+      background: #f2f6fa;
+      border: 1px solid #cbd5df;
+      border-radius: 8px;
+      padding: 18px;
+      margin: 18px 0;
+    }
+    pre {
+      background: #14212e;
+      color: #e8f3fc;
+      padding: 18px;
+      overflow-x: auto;
+      border-radius: 8px;
+    }
+    fieldset {
+      border: 1px solid #cbd5df;
+      border-radius: 8px;
+      margin: 18px 0;
+      padding: 16px;
+    }
+    legend { font-weight: bold; }
+    label { display: block; margin: 9px 0; }
+    button {
+      background: #1456a0;
+      color: white;
+      border: 0;
+      border-radius: 6px;
+      padding: 12px 18px;
+      cursor: pointer;
+      font-size: 1rem;
+    }
+    #feedback { margin-top: 20px; }
+  </style>
+</head>
+<body>
+  <h1>CySA+ Practice PBQ: Investigate Suspicious Sign-ins</h1>
+
+  <div class="panel">
+    <strong>Scenario:</strong> You are a SOC analyst. A user reports that
+    their account may have been accessed without permission. Review the
+    authentication and endpoint events below. Then answer the questions.
+  </div>
+
+  <h2>Evidence</h2>
+  <pre>
+09:12:04 AUTH  user=amorgan src=203.0.113.45 result=FAIL  reason=bad_password
+09:12:08 AUTH  user=amorgan src=203.0.113.45 result=FAIL  reason=bad_password
+09:12:11 AUTH  user=amorgan src=203.0.113.45 result=FAIL  reason=bad_password
+09:12:17 AUTH  user=amorgan src=203.0.113.45 result=SUCCESS mfa=approved
+09:14:32 EDR   host=FIN-LAP-07 user=amorgan event=script_execution
+09:15:09 EDR   host=FIN-LAP-07 event=connection dst=198.51.100.24
+  </pre>
+
+  <form id="quiz">
+    <fieldset>
+      <legend>1. Which event most strongly suggests the account was accessed?</legend>
+      <label><input type="radio" name="q1" value="a"> The first failed sign-in</label>
+      <label><input type="radio" name="q1" value="b"> The successful sign-in after several failures</label>
+      <label><input type="radio" name="q1" value="c"> The endpoint's name</label>
+    </fieldset>
+
+    <fieldset>
+      <legend>2. Which system should the analyst investigate next?</legend>
+      <label><input type="radio" name="q2" value="a"> FIN-LAP-07</label>
+      <label><input type="radio" name="q2" value="b"> Every printer on the network</label>
+      <label><input type="radio" name="q2" value="c"> The backup server, based only on these logs</label>
+    </fieldset>
+
+    <fieldset>
+      <legend>3. What is the best immediate response?</legend>
+      <label><input type="radio" name="q3" value="a"> Delete the logs</label>
+      <label><input type="radio" name="q3" value="b"> Ignore the activity because MFA was approved</label>
+      <label><input type="radio" name="q3" value="c"> Escalate the incident, preserve evidence, and follow the account and host containment procedures</label>
+    </fieldset>
+
+    <button type="submit">Check my answers</button>
+  </form>
+
+  <div id="feedback" role="status" aria-live="polite"></div>
+
+  <script>
+    document.getElementById("quiz").addEventListener("submit", function (event) {
+      event.preventDefault();
+
+      const selected = ["q1", "q2", "q3"].map(
+        name => document.querySelector(`input[name="${name}"]:checked`)?.value
+      );
+      const feedback = document.getElementById("feedback");
+
+      if (selected.some(answer => !answer)) {
+        feedback.textContent = "Please answer all three questions first.";
+        return;
+      }
+
+      const correct = ["b", "a", "c"];
+      const explanations = [
+        "Q1: The successful sign-in after repeated failures warrants investigation. MFA approval alone does not prove the activity was authorized.",
+        "Q2: FIN-LAP-07 has follow-on script and connection events tied to the user.",
+        "Q3: Escalate and preserve the evidence, then use your organization's approved containment procedures."
+      ];
+      const score = selected.filter((answer, i) => answer === correct[i]).length;
+
+      feedback.innerHTML =
+        `<div class="panel"><h2>Score: ${score}/3</h2>` +
+        explanations.map((explanation, i) =>
+          `<p><strong>${selected[i] === correct[i] ? "Correct" : "Review"}:</strong> ${explanation}</p>`
+        ).join("") +
+        "</div>";
+    });
+  </script>
+</body>
+</html>
