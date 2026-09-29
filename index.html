@@ -1,127 +1,120 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>CySA+ Log Analysis PBQ</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      max-width: 850px;
-      margin: 30px auto;
-      padding: 0 18px;
-      line-height: 1.5;
-      color: #17212b;
-    }
-    .panel {
-      background: #f2f6fa;
-      border: 1px solid #cbd5df;
-      border-radius: 8px;
-      padding: 18px;
-      margin: 18px 0;
-    }
-    pre {
-      background: #14212e;
-      color: #e8f3fc;
-      padding: 18px;
-      overflow-x: auto;
-      border-radius: 8px;
-    }
-    fieldset {
-      border: 1px solid #cbd5df;
-      border-radius: 8px;
-      margin: 18px 0;
-      padding: 16px;
-    }
-    legend { font-weight: bold; }
-    label { display: block; margin: 9px 0; }
-    button {
-      background: #1456a0;
-      color: white;
-      border: 0;
-      border-radius: 6px;
-      padding: 12px 18px;
-      cursor: pointer;
-      font-size: 1rem;
-    }
-    #feedback { margin-top: 20px; }
-  </style>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Autumn SOC • CySA+ Practice</title>
+<style>
+:root{color-scheme:light;--ink:#292321;--orange:#98431d;--border:#dbcab6}*{box-sizing:border-box}body{margin:0;background:#f8f2e8;color:var(--ink);font:16px/1.6 system-ui,sans-serif}header{background:#302820;color:#fff5e4;padding:36px 22px;border-bottom:6px solid #c57536}header>div,main{max-width:1000px;margin:auto}h1{margin:4px 0;font-size:clamp(1.8rem,5vw,2.8rem)}h2{font-size:1.3rem}p{margin:10px 0}.eyebrow{color:#f0bb79;letter-spacing:.1em;font-size:.85rem}main{padding:24px 18px 45px}.panel,fieldset{background:#fffdf9;border:1px solid var(--border);border-radius:12px;padding:20px;margin:18px 0}legend{font-weight:700;padding:0 8px}label{display:block;font-weight:600;margin:8px 0}select,button{font:inherit;padding:11px;border-radius:7px}select{width:100%;background:white;border:1px solid #9b8874;color:var(--ink)}button{border:0;background:var(--orange);color:white;cursor:pointer;margin:5px 8px 5px 0}button.secondary{background:#51493f}button:focus-visible,select:focus-visible{outline:3px solid #247698;outline-offset:3px}pre{white-space:pre;overflow:auto;background:#292822;color:#f7efdc;padding:18px;border-radius:8px;font:14px/1.7 ui-monospace,monospace}.hint{color:#635849;font-size:.92rem}.result{border-left:5px solid var(--orange);padding:12px;background:#fff4df;margin:14px 0}.status{font-weight:bold}.tag{background:#f0e2cc;border-radius:5px;padding:3px 8px;font-size:.8rem}footer{font-size:.85rem;color:#635849;margin-top:25px}@media print{header{background:white;color:black}button,#scenario-picker{display:none}pre{white-space:pre-wrap;background:white;color:black}fieldset{break-inside:avoid}}
+</style>
 </head>
 <body>
-  <h1>CySA+ Practice PBQ: Investigate Suspicious Sign-ins</h1>
-
-  <div class="panel">
-    <strong>Scenario:</strong> You are a SOC analyst. A user reports that
-    their account may have been accessed without permission. Review the
-    authentication and endpoint events below. Then answer the questions.
-  </div>
-
-  <h2>Evidence</h2>
-  <pre>
-09:12:04 AUTH  user=amorgan src=203.0.113.45 result=FAIL  reason=bad_password
-09:12:08 AUTH  user=amorgan src=203.0.113.45 result=FAIL  reason=bad_password
-09:12:11 AUTH  user=amorgan src=203.0.113.45 result=FAIL  reason=bad_password
-09:12:17 AUTH  user=amorgan src=203.0.113.45 result=SUCCESS mfa=approved
-09:14:32 EDR   host=FIN-LAP-07 user=amorgan event=script_execution
-09:15:09 EDR   host=FIN-LAP-07 event=connection dst=198.51.100.24
-  </pre>
-
-  <form id="quiz">
-    <fieldset>
-      <legend>1. Which event most strongly suggests the account was accessed?</legend>
-      <label><input type="radio" name="q1" value="a"> The first failed sign-in</label>
-      <label><input type="radio" name="q1" value="b"> The successful sign-in after several failures</label>
-      <label><input type="radio" name="q1" value="c"> The endpoint's name</label>
-    </fieldset>
-
-    <fieldset>
-      <legend>2. Which system should the analyst investigate next?</legend>
-      <label><input type="radio" name="q2" value="a"> FIN-LAP-07</label>
-      <label><input type="radio" name="q2" value="b"> Every printer on the network</label>
-      <label><input type="radio" name="q2" value="c"> The backup server, based only on these logs</label>
-    </fieldset>
-
-    <fieldset>
-      <legend>3. What is the best immediate response?</legend>
-      <label><input type="radio" name="q3" value="a"> Delete the logs</label>
-      <label><input type="radio" name="q3" value="b"> Ignore the activity because MFA was approved</label>
-      <label><input type="radio" name="q3" value="c"> Escalate the incident, preserve evidence, and follow the account and host containment procedures</label>
-    </fieldset>
-
-    <button type="submit">Check my answers</button>
-  </form>
-
-  <div id="feedback" role="status" aria-live="polite"></div>
-
-  <script>
-    document.getElementById("quiz").addEventListener("submit", function (event) {
-      event.preventDefault();
-
-      const selected = ["q1", "q2", "q3"].map(
-        name => document.querySelector(`input[name="${name}"]:checked`)?.value
-      );
-      const feedback = document.getElementById("feedback");
-
-      if (selected.some(answer => !answer)) {
-        feedback.textContent = "Please answer all three questions first.";
-        return;
-      }
-
-      const correct = ["b", "a", "c"];
-      const explanations = [
-        "Q1: The successful sign-in after repeated failures warrants investigation. MFA approval alone does not prove the activity was authorized.",
-        "Q2: FIN-LAP-07 has follow-on script and connection events tied to the user.",
-        "Q3: Escalate and preserve the evidence, then use your organization's approved containment procedures."
-      ];
-      const score = selected.filter((answer, i) => answer === correct[i]).length;
-
-      feedback.innerHTML =
-        `<div class="panel"><h2>Score: ${score}/3</h2>` +
-        explanations.map((explanation, i) =>
-          `<p><strong>${selected[i] === correct[i] ? "Correct" : "Review"}:</strong> ${explanation}</p>`
-        ).join("") +
-        "</div>";
-    });
-  </script>
+<header><div><div class="eyebrow">🍂 AUTUMN SOC TRAINING LAB</div><h1>Harvest the evidence.</h1><p>Four original CySA+ investigations for the fall season.</p></div></header>
+<main>
+<p>Welcome to the Harvest Ridge SOC. Read each case, identify the evidence, and choose a response. Each case has three scored tasks. These fictional exercises support study and classroom discussion.</p>
+<div class="panel" id="scenario-picker"><label for="scenario">Choose an investigation</label><select id="scenario"></select><p class="hint">Switching cases starts a fresh attempt. Your score is shown after you submit.</p></div>
+<section aria-labelledby="case-title"><h2 id="case-title"></h2><span class="tag" id="skill"></span><p id="story"></p><h2>Evidence board</h2><pre id="evidence" tabindex="0" aria-label="Security evidence"></pre></section>
+<form id="quiz"><div id="tasks"></div><button type="submit">Check my investigation</button><button type="button" class="secondary" id="reset">Try this case again</button></form>
+<div id="feedback" role="status" aria-live="polite" aria-atomic="true"></div>
+<footer>Original practice material; not official CompTIA exam content. Addresses and domains are examples. Scoring happens in your browser; results are not collected. Answers are visible in the source, so use this for practice.</footer>
+</main>
+<script>
+// EDIT HERE: Each case has a story, evidence, and three tasks.
+// The correct answer is a ZERO-BASED option number: 0=first, 1=second, etc.
+const cases = [
+{
+ title:'🍁 Case 1: The Fall Festival Sign-in Mystery',skill:'Authentication log analysis',
+ story:'Before the fall festival, the ticketing portal reports failed sign-ins. All events below came from one external address. Determine the attack pattern and the next action.',
+ evidence:`08:10:01 AUTH src=203.0.113.45 user=alane  result=FAIL attempted_password_id=P1
+08:10:06 AUTH src=203.0.113.45 user=bchen  result=FAIL attempted_password_id=P1
+08:10:12 AUTH src=203.0.113.45 user=cpatel result=FAIL attempted_password_id=P1
+08:10:18 AUTH src=203.0.113.45 user=dgreen result=SUCCESS attempted_password_id=P1
+08:12:03 AUDIT user=dgreen action=export_ticket_customer_list
+NOTE: P1 means the same attempted password; actual passwords are not logged.`,
+ tasks:[
+ {prompt:'Identify the attack pattern.',options:['Password spraying','Brute force against a single account','An authorized vulnerability scan','A distributed denial-of-service attack'],correct:0,why:'One password is tried against multiple accounts. That pattern indicates password spraying. Brute force against one account uses many guesses for that account.'},
+ {prompt:'Select the account requiring immediate investigation.',options:['alane','bchen','dgreen','cpatel'],correct:2,why:'dgreen has a successful sign-in followed by a customer-list export. The other listed sign-ins failed.'},
+ {prompt:'Choose the best initial response under the incident playbook.',options:['Delete the exported file and close the case','Escalate, preserve logs, and restrict the account/revoke sessions as authorized','Ignore the event because one sign-in succeeded','Reinstall the ticketing server before collecting evidence'],correct:1,why:'Protect the affected account and preserve evidence under the approved playbook. Investigate whether the export was authorized; a success event alone does not prove compromise.'}
+ ]
+},
+{
+ title:'🎃 Case 2: A Trick in the Costume Invoice',skill:'Email and endpoint correlation',
+ story:'A festival employee opens a costume supplier invoice. Endpoint protection reports suspicious child processes. The email gateway confirms the sender domain impersonates the approved supplier.',
+ evidence:`10:21:00 MAIL recipient=events@harvest.example attachment=costume_invoice.docm
+10:21:00 GATEWAY sender_domain=costume-payments.example verdict=supplier_impersonation
+10:23:10 EDR host=EVENTS-PC-04 parent=WINWORD.EXE child=powershell.exe
+10:23:11 EDR host=EVENTS-PC-04 powershell_argument=-EncodedCommand
+10:23:14 PROXY host=EVENTS-PC-04 dst=198.51.100.24 action=ALLOW
+10:24:00 EDR host=EVENTS-PC-04 verdict=malicious_download detection=confirmed`,
+ tasks:[
+ {prompt:'Identify the likely initial access method.',options:['Physical theft','Phishing with a malicious attachment','Password spraying','An exposed database port'],correct:1,why:'The impersonated supplier email delivered an attachment that was opened before suspicious process activity. This supports phishing with a malicious attachment.'},
+ {prompt:'Select the strongest event chain to investigate.',options:['Email arrived → user printed a flyer','Word launched PowerShell → outbound connection → confirmed malicious download','A workstation had an ordinary hostname','An employee received an invoice'],correct:1,why:'Correlating process execution, network activity, and the malware verdict provides stronger evidence than any isolated routine event. Encoded PowerShell alone does not prove malicious activity.'},
+ {prompt:'Select the best immediate containment action.',options:['Disconnect the entire organization indefinitely','Forward the attachment to every employee','Isolate EVENTS-PC-04 using EDR, preserve evidence, and escalate','Delete all email gateway logs'],correct:2,why:'EDR isolation limits network spread while supporting investigation. Preserve endpoint and email evidence and follow the incident playbook.'}
+ ]
+},
+{
+ title:'🦃 Case 3: The Harvest Sale Database Exposure',skill:'Nmap interpretation and prioritization',
+ story:'You conduct an authorized external scan of the seasonal storefront. The database should only be reachable by the internal application server. The firewall review below provides additional context.',
+ evidence:`Authorized external scan: nmap -sV -p 22,80,443,3306 203.0.113.80
+PORT     STATE    SERVICE VERSION
+22/tcp   filtered ssh
+80/tcp   open     http    nginx
+443/tcp  open     https   nginx
+3306/tcp open     mysql   MySQL
+FIREWALL rule=ALLOW src=ANY dst=203.0.113.80 port=3306
+ASSET database_contains=customer_contact_and_order_records
+POLICY database_access=internal_application_server_only`,
+ tasks:[
+ {prompt:'Select the finding that violates the stated access policy.',options:['HTTPS is available','SSH is filtered','MySQL is reachable externally on TCP 3306','HTTP is available on TCP 80'],correct:2,why:'The database port is open to the external scanner and the firewall allows any source. This conflicts with the internal-only database policy.'},
+ {prompt:'Choose the highest-priority remediation for this finding.',options:['Restrict database access to approved internal application sources','Change the page background color','Open SSH to every internet address','Disable security logging'],correct:0,why:'Remove the unnecessary external exposure and allow only approved application access. Review the system for other weaknesses and signs of unauthorized access.'},
+ {prompt:'Select the best way to validate the network remediation.',options:['Assume the firewall change worked','Repeat the authorized external scan and verify approved internal application connectivity','Only restart the web browser','Check whether the storefront logo loads'],correct:1,why:'Confirm the database is no longer externally reachable and that permitted application connections still work. An open port alone does not prove a software vulnerability or a breach.'}
+ ]
+},
+{
+ title:'🍂 Case 4: Customer Records Leaving with the Leaves',skill:'DLP and network log correlation',
+ story:'A DLP alert occurs during the autumn membership drive. The organization prohibits customer data uploads to unapproved external storage. Compare the events before recommending a response.',
+ evidence:`14:02:01 AUDIT host=MEMBER-PC-02 user=jriver file=customer_export.csv action=READ
+14:03:08 PROXY host=MEMBER-PC-02 method=POST dst=uploads.autumn-storage.example bytes_out=24800000
+14:03:09 DLP host=MEMBER-PC-02 file=customer_export.csv match=customer_records action=ALERT_ONLY
+14:04:00 INVENTORY dst=uploads.autumn-storage.example approved_storage=NO
+14:04:02 CHANGE_RECORD approved_export_job=NONE`,
+ tasks:[
+ {prompt:'Select the best-supported concern.',options:['Confirmed ransomware encryption','Possible customer-data exfiltration to unapproved storage','A normal approved backup','A password-spraying campaign'],correct:1,why:'The file read, large upload, DLP match, and unapproved destination support possible exfiltration. The analyst must validate the activity and scope before claiming a confirmed breach.'},
+ {prompt:'Identify why the DLP event did not itself stop the transfer.',options:['The policy was in alert-only mode','DLP can never block data transfers','The file was necessarily encrypted','All outbound traffic is automatically trusted'],correct:0,why:'ALERT_ONLY indicates that this policy generated a notification instead of blocking the transfer.'},
+ {prompt:'Choose the best initial response.',options:['Ignore it because the user is an employee','Publish the customer file to reproduce the issue','Escalate, preserve evidence, and stop further uploads to the destination under the playbook','Delete the user account and all its logs immediately'],correct:2,why:'Limit further loss through an authorized containment action and preserve the evidence needed to determine what data was transferred, by whom, and when.'}
+ ]
+}
+];
+const picker=document.getElementById('scenario');
+cases.forEach((item,i)=>{const option=document.createElement('option');option.value=i;option.textContent=item.title;picker.append(option);});
+function render(){
+ const item=cases[Number(picker.value)];
+ document.getElementById('case-title').textContent=item.title;
+ document.getElementById('skill').textContent=item.skill;
+ document.getElementById('story').textContent=item.story;
+ document.getElementById('evidence').textContent=item.evidence;
+ const tasks=document.getElementById('tasks');tasks.replaceChildren();
+ item.tasks.forEach((task,i)=>{
+  const fieldset=document.createElement('fieldset');const legend=document.createElement('legend');legend.textContent=`Task ${i+1}: ${task.prompt}`;fieldset.append(legend);
+  const label=document.createElement('label');label.htmlFor=`answer-${i}`;label.textContent='Your decision';
+  const select=document.createElement('select');select.id=`answer-${i}`;select.name=`answer-${i}`;
+  const blank=document.createElement('option');blank.value='';blank.textContent='Select an answer…';select.append(blank);
+  task.options.forEach((answer,j)=>{const option=document.createElement('option');option.value=j;option.textContent=answer;select.append(option);});
+  fieldset.append(label,select);tasks.append(fieldset);
+ });
+ document.getElementById('feedback').replaceChildren();
+}
+picker.addEventListener('change',render);
+document.getElementById('reset').addEventListener('click',render);
+document.getElementById('quiz').addEventListener('submit',event=>{
+ event.preventDefault();const feedback=document.getElementById('feedback');feedback.replaceChildren();
+ const item=cases[Number(picker.value)];const answers=item.tasks.map((_,i)=>document.getElementById(`answer-${i}`).value);
+ const missing=answers.findIndex(answer=>answer==='');
+ if(missing!==-1){feedback.textContent='Complete all three tasks before checking your investigation.';document.getElementById(`answer-${missing}`).focus();return;}
+ let score=0;item.tasks.forEach((task,i)=>{if(Number(answers[i])===task.correct)score++;});
+ const heading=document.createElement('h2');heading.textContent=`Investigation score: ${score}/3`;feedback.append(heading);
+ item.tasks.forEach((task,i)=>{const result=document.createElement('div');result.className='result';const status=document.createElement('p');status.className='status';status.textContent=`Task ${i+1}: ${Number(answers[i])===task.correct?'Correct':'Review this decision'}`;const answer=document.createElement('p');answer.textContent=`Best answer: ${task.options[task.correct]}`;const why=document.createElement('p');why.textContent=task.why;result.append(status,answer,why);feedback.append(result);});
+});
+render();
+</script>
 </body>
 </html>
